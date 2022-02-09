@@ -14,9 +14,16 @@ import matplotlib.pyplot as plt
 #plt.plot(x, arima.predict(n_periods=test.shape[0]))
 #plt.title('Actual test samples vs. forecasts')
 #plt.show()
+'''
 series_code = 'NY.GDP.MKTP.CN'
 country_code = 'AFG;'
-'''
+a = 143434
+
+if a:
+    print('None is true')
+else:
+    print('None is false')
+
 try:
     if not re.fullmatch('[A-Za-z]+', country_code):
         raise ValueError
@@ -31,13 +38,18 @@ array = np.array([])
 array = np.append(array,[1])
 array = np.append(array,[1])
 print(array)
+
 '''
 df = pd.DataFrame(columns=['date','value'])
 print(df)
-df = df.append({'date': '2020', 'value': None}, ignore_index=True)
+df = df.append({'date': '2020', 'value': 1}, ignore_index=True)
 df = df.append({'date': '2021M07', 'value': 10}, ignore_index=True)
-df = df.dropna()
-print(df)
+
+a = np.array([1,2])
+b = None
+print(type(b))
+if a is not None:
+    print('ssss')
 '''
 print(df.set_index('date').T)
 dict = df.set_index('date').T.to_dict('records')[0]
