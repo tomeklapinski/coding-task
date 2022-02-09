@@ -133,7 +133,7 @@ def pmdarima_transformation(df):
 
 
 ### Train the model
-try:fff
+try:
     train_data = pmdarima_transformation(data_df)
     if data_df.shape[0] == 0:
         raise ValueError
