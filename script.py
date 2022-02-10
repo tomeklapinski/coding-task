@@ -39,7 +39,7 @@ logger.propagate = False
 
 
 ### Reading parameters from command line interface
-# interface arguments hava format --series_code=NY.GDP.MKTP.CN --country_code=AFG
+# interface arguments hava the following format --series_code=NY.GDP.MKTP.CN --country_code=AFG
 logger.info('Program starts')
 series_code = sys.argv[1][14:]
 country_code = sys.argv[2][15:]
