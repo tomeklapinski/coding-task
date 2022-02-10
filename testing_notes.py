@@ -4,6 +4,7 @@ import re
 import pmdarima as pm
 import numpy as np
 import matplotlib.pyplot as plt
+import logging
 
 #data = pm.datasets.load_wineind()
 #train, test = pm.model_selection.train_test_split(data, train_size=150)
@@ -14,6 +15,32 @@ import matplotlib.pyplot as plt
 #plt.plot(x, arima.predict(n_periods=test.shape[0]))
 #plt.title('Actual test samples vs. forecasts')
 #plt.show()
+
+'''
+# create logger
+logger = logging.getLogger('simple_example')
+logger.setLevel(logging.DEBUG)
+
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger.addHandler(ch)
+
+# 'application' code
+logger.debug('debug message')
+logger.info('info message')
+logger.warning('warn message')
+logger.error('error message')
+logger.critical('critical message')
+'''
 '''
 series_code = 'NY.GDP.MKTP.CN'
 country_code = 'AFG;'
@@ -39,7 +66,7 @@ array = np.append(array,[1])
 array = np.append(array,[1])
 print(array)
 
-'''
+
 df = pd.DataFrame(columns=['date','value'])
 print(df)
 df = df.append({'date': '2020', 'value': 1}, ignore_index=True)
@@ -50,7 +77,7 @@ b = None
 print(type(b))
 if a is not None:
     print('ssss')
-'''
+
 print(df.set_index('date').T)
 dict = df.set_index('date').T.to_dict('records')[0]
 print(type(dict),dict)

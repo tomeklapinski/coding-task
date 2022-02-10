@@ -1,0 +1,5 @@
+2022-02-10 11:11:12,817 - INFO - Program starts
+2022-02-10 11:11:17,020 - INFO - Loading and cleaning data finished
+2022-02-10 11:11:18,395 - INFO - Creating and training model is finished
+2022-02-10 11:11:28,099 - INFO - Predictin, saving and plotting model finished
+2022-02-10 11:11:28,099 - INFO - Program ends

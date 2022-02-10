@@ -10,19 +10,43 @@ import urllib, json
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import logging
+
+
+### Setting up logger
+
+logger = logging.getLogger('script')
+logger.setLevel(logging.INFO)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+file_handler = logging.FileHandler('execution_log', mode='w')
+file_handler.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
+formatter_with_date = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter_with_date)
+
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+logger.propagate = False
+
+
 
 
 #####   PART 1 - LOADING AND CLEANING THE DATA  #####
 
-
+logger.info('Program starts')
 ### Reading parameters from command line interface
-series_code = sys.argv[1]
-country_code = sys.argv[2]
-series_code = 'NY.GDP.MKTP.CN'
-country_code = 'AFG'
+# interface arguments has format --series_code=NY.GDP.MKTP.CN --country_code=AFG
+series_code = sys.argv[1][14:]
+country_code = sys.argv[2][15:]
+series_code = 'DP.DOD.DECD.CR.BC.CD'
+country_code = 'CHL'
 
 if not re.fullmatch('[A-Za-z.]+', series_code) or not re.fullmatch('[A-Za-z]+', country_code):
-    print('Incorrect script parameters. Need series code as first parameter and country code as second.\nProgram terminates.')
+    logger.critical('Incorrect script parameters. Need series code as first parameter and country code as second. Program terminates.')
     raise ValueError
 
 ### Initial query for reading data parameters
@@ -31,14 +55,14 @@ try:
     data_handle = urllib.request.urlopen(query_string)
     data = json.loads(data_handle.read())
 except URLError:
-    print('Establishing connection to URL was unsuccessful.\nProgram terminates')
+    logger.critical('Establishing connection to URL was unsuccessful. Program terminates')
     sys.exit(1)
 except JSONDecodeError:
-    print('Data to deserialize should be in json format.\nProgram terminates')
+    logger.critical('Data to deserialize should be in json format. Program terminates')
     sys.exit(1)
 
 if not re.fullmatch('[0-9]+', str(data[0]['pages'])) or not re.fullmatch('[0-9]+', str(data[0]['per_page'])) or not re.fullmatch('[0-9]+', str(data[0]['total'])):
-    print('Incorrect data parameters, such as number of pages, records, records per page.\nProgram terminates.')
+    logger.critical('Incorrect data parameters, such as number of pages, records, records per page. Program terminates.')
     raise ValueError
 else:
     number_of_pages = data[0]['pages']
@@ -56,9 +80,9 @@ for n in range(number_of_pages-1,-1,-1):
         data_handle = urllib.request.urlopen(query_string)
         data = json.loads(data_handle.read())
     except URLError:
-        print('Establishing connection to URL was unsuccessfull for page ', n+1, '\nPage', n+1,'will be excluded from the data')
+        logger.critical('Establishing connection to URL was unsuccessfull for page ', n+1, 'Page', n+1,'will be excluded from the data')
     except JSONDecodeError:
-        print('Data to deserialize should be json format.\nPage', n+1,'will be excluded from the data')
+        logger.critical('Data to deserialize should be json format. Page', n+1,'will be excluded from the data')
 
     # Account for that the number of records might be different on the last page
     if n == number_of_pages-1:
@@ -72,7 +96,7 @@ for n in range(number_of_pages-1,-1,-1):
             data_df = data_df.append({'date': data[1][i]['date'], 'value': data[1][i]['value']}, ignore_index=True)
 
 if data_df.shape[0] == 0:
-    print('The URL query lack of proper data points.\nProgram terminates')
+    logger.critical('The URL query lack of proper data points. Program terminates')
     raise ValueError
 
 
@@ -95,7 +119,7 @@ def get_formatted_date(date):
         elif date[5] == '4':
             date = re.sub(r'Q4', '-10-01', date)
     else:
-        print('Data point with date:', date, 'has incorrect format.\nThis point will be excluded form data.')
+        logger.error('Data point with date:', date, 'has incorrect format. This point will be excluded form data.')
         date = None
     return date
 
@@ -112,6 +136,7 @@ for item in reversed(data_df.date):
 number_of_predictions = 2030 - lastYearDate
 first_prediction_year = lastYearDate + 1
 
+logger.info('Loading and cleaning data finished')
 
 
 #####   PART 2 - CREATING AND TRAINING THE MODELS  #####
@@ -148,15 +173,15 @@ class ArimaModel(Model):
                                   suppress_warnings=True, maxiter=5,
                                   seasonal=False)
         except ValueError:
-            print('Lack of appropriate data points for ARIMA model.\nPredictions will be made without this model.')
+            logger.error('Lack of appropriate data points for ARIMA model. Predictions will be made without this model.')
         except:
-            print('Creating and training ARIMA model was unsuccessful.\nPredictions will be made without this model.')
+            logger.error('Creating and training ARIMA model was unsuccessful. Predictions will be made without this model.')
 
     def predict(self, number_of_predictions, first_prediction_year):
         try:
             return self.arima_model.predict(n_periods=number_of_predictions)
         except:
-            print('Predicting with ARIMA model was unsuccessful.\nPredictions will be made without this model.')
+            logger.error('Predicting with ARIMA model was unsuccessful. Predictions will be made without this model.')
             return None
 
 
@@ -170,7 +195,7 @@ class ProphetModel(Model):
         try:
             self.prophet_model.fit(data_df.rename(columns={'date': 'ds', 'value': 'y'}))
         except:
-            print('Creating and training Prophet model was unsuccessful.\nPredictions will be made without this model.')
+            logger.error('Creating and training Prophet model was unsuccessful. Predictions will be made without this model.')
             
     def predict(self, number_of_predictions, first_prediction_year):
         try:
@@ -179,7 +204,7 @@ class ProphetModel(Model):
                 future_df = future_df.append({'ds': str(first_prediction_year + n) + '-01-01'}, ignore_index=True)
             return self.prophet_model.predict(future_df)['yhat'].squeeze().to_numpy()
         except:
-            print('Predicting with Prophet model was unsuccessful.\nPredictions will be made without this model.')
+            logger.error('Predicting with Prophet model was unsuccessful. Predictions will be made without this model.')
             return None
 
 
@@ -193,6 +218,7 @@ Models.loc[1] = ['Prophet', ProphetModel(), None]
 for i in range(Models.shape[0]):
     Models['Object'][i].fit(data_df)
 
+logger.info('Creating and training model is finished')
 
 
 #####   PART 3 - PERFORMING PREDICTIONS AND SAVING TO FILE
@@ -200,7 +226,6 @@ for i in range(Models.shape[0]):
 ### Predicting with models
 for i in range(Models.shape[0]):
     Models['Predictions'][i] = Models['Object'][i].predict(number_of_predictions, first_prediction_year)
-
 
 ### Creating predictions based on ensemble of available models predictions
 size_of_ensemble = 0
@@ -216,7 +241,7 @@ if size_of_ensemble > 0:
     for n in range(number_of_predictions):
         predictions_dict[str(first_prediction_year + n) + '-01-01'] /= size_of_ensemble
 else:
-    print('Predicting with ensemble was unsuccessful due to lack of model predictions.\nProgram terminates.')
+    logger.critical('Predicting with ensemble was unsuccessful due to lack of model predictions. Program terminates.')
     sys.exit(1)
 
 
@@ -228,11 +253,11 @@ try:
     with open('output.json', 'w') as output:
         json.dump(output_dict, output)
 except:
-    print('Writing to file was unsuccessful.')
+    logger.error('Writing to file was unsuccessful.')
 
 plt.plot(*zip(*data_dict.items()))
 plt.plot(*zip(*predictions_dict.items()),"r")
 plt.show()
 
-
-
+logger.info('Predictin, saving and plotting model finished')
+logger.info('Program ends')
