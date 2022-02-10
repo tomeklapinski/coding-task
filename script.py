@@ -33,10 +33,7 @@ logger.propagate = False
 
 
 
-
 #####   PART 1 - LOADING AND CLEANING THE DATA  #####
-
-
 
 ### Reading parameters from command line interface
 # interface arguments hava the following format --series_code=NY.GDP.MKTP.CN --country_code=AFG
@@ -68,8 +65,6 @@ else:
     number_of_records_per_page = data[0]['per_page']
     total_number_of_records = data[0]['total']
 
-
-
 ### Query for each data page, load date and value field into data frame
 data_df = pd.DataFrame(columns=['date', 'value'])
 for n in range(number_of_pages-1,-1,-1):
@@ -97,7 +92,6 @@ for n in range(number_of_pages-1,-1,-1):
 if data_df.shape[0] == 0:
     logger.critical('The URL query lack of proper data points. Program terminates')
     raise ValueError
-
 
 ### Reformat date to YYYY-MM-DD format
 def get_formatted_date(date):
@@ -212,7 +206,6 @@ Models = pd.DataFrame(columns=['Name','Object','Predictions'])
 Models.loc[0] = ['ARIMA', ArimaModel(), None]
 Models.loc[1] = ['Prophet', ProphetModel(), None]
 
-
 ### Train the models
 for i in range(Models.shape[0]):
     Models['Object'][i].fit(data_df)
@@ -242,7 +235,6 @@ if size_of_ensemble > 0:
 else:
     logger.critical('Predicting with ensemble was unsuccessful due to lack of model predictions. Program terminates.')
     sys.exit(1)
-
 
 ### Creating output dictionary, saving to json file and plotting results
 data_dict = data_df.set_index('date').T.to_dict('records')[0]
