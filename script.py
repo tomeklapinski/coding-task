@@ -1,9 +1,9 @@
 from json import JSONDecodeError
 from urllib.error import URLError
 from abc import ABC, abstractmethod
+from prophet import Prophet
 
 import pmdarima as pm
-from prophet import Prophet
 import re
 import sys
 import urllib, json
@@ -14,7 +14,6 @@ import logging
 
 
 ### Setting up logger
-
 logger = logging.getLogger('script')
 logger.setLevel(logging.INFO)
 
@@ -37,13 +36,13 @@ logger.propagate = False
 
 #####   PART 1 - LOADING AND CLEANING THE DATA  #####
 
-logger.info('Program starts')
+
+
 ### Reading parameters from command line interface
-# interface arguments has format --series_code=NY.GDP.MKTP.CN --country_code=AFG
+# interface arguments hava format --series_code=NY.GDP.MKTP.CN --country_code=AFG
+logger.info('Program starts')
 series_code = sys.argv[1][14:]
 country_code = sys.argv[2][15:]
-series_code = 'DP.DOD.DECD.CR.BC.CD'
-country_code = 'CHL'
 
 if not re.fullmatch('[A-Za-z.]+', series_code) or not re.fullmatch('[A-Za-z]+', country_code):
     logger.critical('Incorrect script parameters. Need series code as first parameter and country code as second. Program terminates.')
@@ -71,8 +70,8 @@ else:
 
 
 
-### Query for each data page and load date and value field into data frame
-data_df = pd.DataFrame(columns=['date','value'])
+### Query for each data page, load date and value field into data frame
+data_df = pd.DataFrame(columns=['date', 'value'])
 for n in range(number_of_pages-1,-1,-1):
     # Performing query
     query_string = 'https://api.worldbank.org/v2/country/' + country_code + '/indicator/' + series_code + '?format=json' + '&page=' + str(n+1)
@@ -80,9 +79,9 @@ for n in range(number_of_pages-1,-1,-1):
         data_handle = urllib.request.urlopen(query_string)
         data = json.loads(data_handle.read())
     except URLError:
-        logger.critical('Establishing connection to URL was unsuccessfull for page ', n+1, 'Page', n+1,'will be excluded from the data')
+        logger.error('Establishing connection to URL was unsuccessfull for page %i Page %i will be excluded from the data', n+1, n+1)
     except JSONDecodeError:
-        logger.critical('Data to deserialize should be json format. Page', n+1,'will be excluded from the data')
+        logger.error('Data to deserialize should be json format. Page %i will be excluded from the data', n+1)
 
     # Account for that the number of records might be different on the last page
     if n == number_of_pages-1:
@@ -119,7 +118,7 @@ def get_formatted_date(date):
         elif date[5] == '4':
             date = re.sub(r'Q4', '-10-01', date)
     else:
-        logger.error('Data point with date:', date, 'has incorrect format. This point will be excluded form data.')
+        logger.error('Data point with date: %s has incorrect format. This point will be excluded form data.', date)
         date = None
     return date
 
@@ -221,7 +220,7 @@ for i in range(Models.shape[0]):
 logger.info('Creating and training model is finished')
 
 
-#####   PART 3 - PERFORMING PREDICTIONS AND SAVING TO FILE
+#####   PART 3 - PERFORMING PREDICTIONS, SAVING TO FILE AND PLOTTING
 
 ### Predicting with models
 for i in range(Models.shape[0]):
@@ -259,5 +258,5 @@ plt.plot(*zip(*data_dict.items()))
 plt.plot(*zip(*predictions_dict.items()),"r")
 plt.show()
 
-logger.info('Predictin, saving and plotting model finished')
+logger.info('Predicting, saving results to file \'output.json\' and plotting model finished')
 logger.info('Program ends')
