@@ -1,10 +1,12 @@
 # Task solution
 
-The solution for the task is in the file named scirpt.py.
-The series and country code are passed to program through command line interface, for example, for series code 'NY.GDP.MKTP.CN' and the country code 'afg' one should run command
+The solution for the task is in the file 'script.py' on the master branch.
+The series and country code are passed to program through the command line interface, for example, for the series code 'NY.GDP.MKTP.CN' and the country code 'afg' one should run the following command
 
-*python script.py --series_code=NY.GDP.MKTP.CN --countr_code=afg*
+    python script.py --series_code=NY.GDP.MKTP.CN --country_code=afg
 
-For completness program includes exception handling and logging. 
-Additionally models are put int wrapper classes to enable polymorphic behaviour, for the ease of extensibility by additional models. 
+Output is saved in the file 'output.json'.
+
+For completeness program includes exception handling and logging. Logging is saved in the file 'execution_log.log'
+Additionally, models are put in the wrapper classes to enable polymorphic behaviour for the ease of extensibility by additional models. 
 
